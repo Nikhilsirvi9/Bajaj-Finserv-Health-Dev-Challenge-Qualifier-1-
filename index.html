@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0832CS211131</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --card-bg: #f8f9fa;
+            --button-bg: #007BFF;
+            --button-hover: #0056b3;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1e1e2f;
+            --text-color: #f1f1f1;
+            --card-bg: #2b2b3d;
+            --button-bg: #6c63ff;
+            --button-hover: #5348c8;
+            --shadow-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .container {
+            background: var(--bg-color);
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            transition: background-color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid var(--text-color);
+            border-radius: 5px;
+            font-size: 14px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            resize: none;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        button {
+            background-color: var(--button-bg);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+            transform: scale(1.05);
+        }
+
+        .response-section {
+            margin-top: 20px;
+        }
+
+        .filter {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .filter label {
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .filter select {
+            padding: 5px 10px;
+            border: 1px solid var(--text-color);
+            border-radius: 5px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .response-card {
+            background: var(--card-bg);
+            border: 1px solid var(--text-color);
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 14px;
+            word-break: break-word;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s forwards;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dark-mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            background: var(--button-bg);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: var(--button-hover);
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()">Enable Dark Mode</button>
+    <div class="container">
+        <h2>Fancy Backend Tester</h2>
+        <textarea id="jsonInput" placeholder='Enter JSON here, e.g., {"data": ["1", "2", "a", "b", "34"]}'></textarea>
+        <button onclick="sendRequest()">Send Request</button>
+
+        <div class="response-section">
+            <div class="filter">
+                <label for="filterDropdown">Filter Response:</label>
+                <select id="filterDropdown" onchange="filterResponse()">
+                    <option value="all">All</option>
+                    <option value="numbers">Numbers</option>
+                    <option value="alphabets">Alphabets</option>
+                </select>
+            </div>
+            <div id="responseContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let rawResponse = {};
+
+        async function sendRequest() {
+            const inputField = document.getElementById('jsonInput');
+            const responseContainer = document.getElementById('responseContainer');
+            responseContainer.innerHTML = '';
+
+            try {
+                const jsonData = JSON.parse(inputField.value);
+                const response = await fetch('http://127.0.0.1:8000/bfhl', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jsonData),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+
+                rawResponse = await response.json();
+                renderResponse(rawResponse);
+            } catch (error) {
+                responseContainer.innerHTML = `<div class="response-card" style="color: red;">${error.message}</div>`;
+            }
+        }
+
+        function renderResponse(response) {
+            const responseContainer = document.getElementById('responseContainer');
+            responseContainer.innerHTML = '';
+
+            for (const [key, value] of Object.entries(response)) {
+                const card = document.createElement('div');
+                card.className = 'response-card';
+                card.innerHTML = `<strong>${key}:</strong> ${JSON.stringify(value)}`;
+                responseContainer.appendChild(card);
+            }
+        }
+
+        function filterResponse() {
+            const filterValue = document.getElementById('filterDropdown').value;
+
+            if (filterValue === 'all') {
+                renderResponse(rawResponse);
+                return;
+            }
+
+            const filteredResponse = { [filterValue]: rawResponse[filterValue] };
+            renderResponse(filteredResponse);
+        }
+
+        function toggleDarkMode() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+
+            const toggleButton = document.querySelector('.dark-mode-toggle');
+            toggleButton.textContent = newTheme === 'light' ? 'Enable Dark Mode' : 'Disable Dark Mode';
+        }
+    </script>
+</body>
+</html>
